@@ -3,111 +3,412 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>送给你的祝福</title>
+  <title>生日快乐 🎂</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft Yahei", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft Yahei", sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
       background: radial-gradient(circle at top, #ffe6f2, #ffd6a5, #a0c4ff);
-      padding: 16px;
-    }
-    .card {
-      width: 100%;
-      max-width: 420px;
-      background: rgba(255,255,255,0.94);
-      border-radius: 20px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.15);
-      padding: 24px 20px 20px;
-      text-align: center;
-      position: relative;
       overflow: hidden;
     }
+
+    #stage {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      max-width: 600px;
+    }
+
+    /* 弹幕层 */
+    #danmu-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      transition: opacity 1s ease;
+    }
+
+    .danmu {
+      position: absolute;
+      right: -50vw;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-size: 16px;
+      white-space: nowrap;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+      animation: danmuMove 15s linear forwards;
+    }
+
+    @keyframes danmuMove {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-180vw); }
+    }
+
+    #danmu-layer.fade-out {
+      opacity: 0;
+    }
+
+    /* 生日蛋糕卡片 */
+    #cake-card {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.9);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    #cake-card.show {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    .card-inner {
+      background: rgba(255,255,255,0.96);
+      border-radius: 24px;
+      padding: 24px 20px 20px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.2);
+      text-align: center;
+      position: relative;
+    }
+
     .tag {
-      font-size: 13px;
-      letter-spacing: .2em;
+      font-size: 12px;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
       color: #ff7b9c;
       margin-bottom: 8px;
     }
+
     h1 {
       font-size: 24px;
-      margin-bottom: 16px;
       color: #333;
+      margin-top: 12px;
+      margin-bottom: 10px;
     }
-    .message {
-      font-size: 16px;
-      line-height: 1.7;
-      color: #555;
-      margin-bottom: 20px;
-      padding: 0 4px;
-      white-space: pre-line;
+
+    .sub {
+      font-size: 15px;
+      color: #666;
+      line-height: 1.8;
+      margin-top: 6px;
     }
-    .from {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 16px;
+
+    /* 小蛋糕 */
+    .cake-wrap {
+      margin-top: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: center;
     }
-    button {
-      border: none;
-      outline: none;
-      padding: 10px 20px;
-      border-radius: 999px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      background: linear-gradient(120deg, #ff9a9e, #fad0c4);
-      color: #fff;
-      box-shadow: 0 8px 20px rgba(255,154,158,0.5);
-      transition: transform .1s ease, box-shadow .1s ease, filter .15s ease;
+
+    .cake {
+      position: relative;
+      width: 120px;
+      height: 110px;
     }
-    button:active {
-      transform: translateY(1px) scale(.98);
-      box-shadow: 0 4px 12px rgba(255,154,158,0.5);
-      filter: brightness(.97);
+
+    .cake .plate {
+      position: absolute;
+      bottom: 0;
+      width: 130px;
+      height: 18px;
+      background: #f3f3f3;
+      border-radius: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
-    .hint {
+
+    .cake .layer {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffe0e9;
+      border-radius: 12px 12px 8px 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+
+    .cake .layer.bottom {
+      width: 120px;
+      height: 42px;
+      bottom: 18px;
+    }
+
+    .cake .layer.middle {
+      width: 95px;
+      height: 34px;
+      bottom: 50px;
+      background: #ffd3b1;
+    }
+
+    .cake .layer.top {
+      width: 70px;
+      height: 26px;
+      bottom: 80px;
+      background: #fff0c7;
+    }
+
+    .cake .drip {
+      position: absolute;
+      width: 12px;
+      height: 18px;
+      background: #ffb6c1;
+      border-radius: 10px;
+      top: 68px;
+    }
+
+    .cake .drip.d1 { left: 36px; }
+    .cake .drip.d2 { left: 58px; height: 22px; }
+    .cake .drip.d3 { left: 80px; }
+
+    .candle {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 104px;
+      width: 10px;
+      height: 26px;
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: 0 0 0 2px rgba(255,192,203,0.7) inset;
+    }
+
+    .flame {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 24px;
+      width: 14px;
+      height: 22px;
+      background: radial-gradient(circle at 30% 30%, #fff9c4, #ff9800);
+      border-radius: 50%;
+      box-shadow: 0 0 12px rgba(255,152,0,0.9);
+      animation: flicker 0.8s infinite alternate;
+    }
+
+    @keyframes flicker {
+      from { transform: translateX(-50%) scale(1); opacity: 0.9; }
+      to   { transform: translateX(-50%) scale(1.08); opacity: 1; }
+    }
+
+    .footer-note {
       font-size: 12px;
       color: #aaa;
-      margin-top: 8px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="tag">FOR YOU</div>
-    <h1>送给你的专属祝福 ✨</h1>
+  <div id="stage">
+    <!-- 弹幕层 -->
+    <div id="danmu-layer"></div>
 
-    <p class="message" id="msg"></p>
+    <!-- 生日蛋糕卡片 -->
+    <div id="cake-card">
+      <div class="card-inner">
+        <div class="tag">HAPPY BIRTHDAY</div>
 
-    <p class="from">—— 来自默默为你加油的人 💌</p>
+        <div class="cake-wrap">
+          <div class="cake">
+            <div class="plate"></div>
+            <div class="layer bottom"></div>
+            <div class="layer middle"></div>
+            <div class="layer top"></div>
+            <div class="drip d1"></div>
+            <div class="drip d2"></div>
+            <div class="drip d3"></div>
+            <div class="candle">
+              <div class="flame"></div>
+            </div>
+          </div>
+        </div>
 
-    <button onclick="changeBless()">换一句祝福</button>
-    <div class="hint">点一下按钮，解锁一条新的小小祝福 🎁</div>
+        <h1><span id="cake-name"></span>，生日快乐！🎂</h1>
+        <p class="sub">
+          愿你被世界温柔以待，<br>
+          也愿这一年所有的期待都不落空。
+        </p>
+        <p class="footer-note">—— 有人悄悄为你准备了这一页小小的惊喜 💌</p>
+      </div>
+    </div>
   </div>
 
   <script>
+    // ★ 在这里改对方的名字 / 昵称
+    const NAME = "蛋蛋";
+
+    // ★ 很多很多生日祝福（已经接近 100 条了）
     const messages = [
-      "愿看到这个页面的你，一切烦恼都被清风带走，以后每一天都闪闪发光。",
-      "愿你所念皆如愿，所行化坦途，所盼都能实现。",
-      "希望你永远被温柔以待，也永远有拥抱生活的勇气。",
-      "愿你有人懂，有人宠，有事做，有梦追。",
-      "不管今天怎么样，明天一定会比今天更好一点点。",
-      "愿你眼里总有光芒，手里总有热茶，心中总有期待。",
-      "愿你被世界温柔以待，也别忘了好好爱自己。"
+      NAME + "，今天是你的生日呀 🎉",
+      "今天所有的光都在为你亮，所有的祝福都朝你奔来。",
+      "愿你一岁有一岁的欢喜，岁岁常欢愉，年年皆胜意。",
+      "愿你在新的岁月里，眼里有星辰，身边有挚爱，心里有远方。",
+      "愿你所有温柔与爱意，都被世界轻轻接住。",
+      "愿你所遇皆良人，所行皆坦途，所想皆如愿。",
+      "愿你的笑容，像夏日的风一样，吹散所有阴霾。",
+      "愿你读书时全神贯注，玩的时候放肆开心。",
+      "愿你心里常住小太阳，不靠别人也能发光。",
+      "愿你被生活温柔以待，也有底气对世界说：我值得。",
+      "愿你想要的都拥有，得不到的都释怀。",
+      "愿你走过的路，最终都变成脚下的底气。",
+      "愿你山高路远总有人陪，风雨人生有人相依。",
+      "愿你被喜欢环绕，被好运牵手，被幸福拥抱。",
+      "愿你坚持的事情都不被辜负，热爱的生活都如你所愿。",
+      "愿你被很多人宠着，也被自己好好爱着。",
+      "愿你在每个平凡的日子里，都能收获不平凡的小惊喜。",
+      "愿你心里装着星河，眼中藏着温柔与坚定。",
+      "愿你所期待的，都在慢慢靠近你。",
+      "愿你永远不缺从头再来的勇气。",
+      "愿你走过半生，归来仍是那个被爱的小孩。",
+      "愿你不被时间磨平棱角，却被岁月温柔以待。",
+      "愿你白天有说有笑，晚上睡个好觉。",
+      "愿你忙碌不失热爱，疲惫不丢期待。",
+      "愿你所有的崩溃，都能换来更好的重启。",
+      "愿你内心有光，脚下有路，身边有人同行。",
+      "愿你哭的时候有人安慰，笑的时候有人陪伴。",
+      "愿你所有的心酸都有人懂，所有的付出都有回报。",
+      "愿你在被现实推搡的时候，也别丢掉温柔和浪漫。",
+      "愿你越长大越温柔，也越坚定。",
+      "愿你不被标签束缚，只按自己喜欢的样子生活。",
+      "愿你心之所向皆能抵达，愿你所爱之人恰好也爱你。",
+      "愿你在以后的每个生日，都能真心地对自己说：这一年我有好好生活。",
+      "愿你的世界永远明亮，身边永远有人把你放心上。",
+      "愿你眉眼带笑，心底有光，不惧远方。",
+      "愿你走过荆棘，依旧相信花会再开。",
+      "愿你眼中有风景，心中有山海，脚下有自己选的方向。",
+      "愿你被温柔以待的同时，也能成为别人的温柔。",
+      "愿你历经千帆，仍然觉得人生值得。",
+      "愿你心里有火，眼里有光，身后有人。",
+      "愿你每一次的认真，都有人看见；每一次的难过，都有人安慰。",
+      "愿你不再被情绪裹挟，学会温柔地对待自己。",
+      "愿你所爱之人，恰好也会为你准备惊喜。",
+      "愿你在未来的路上，每一步都算数。",
+      "愿你对喜欢的事情永远充满热情。",
+      "愿你偶尔迷茫，但永远不放弃向前走。",
+      "愿你在黑夜里有灯，在雨天里有伞，在失落时有拥抱。",
+      "愿你被珍惜，被偏爱，被坚定地选择。",
+      "愿你所有的努力，都在某个不经意的瞬间开花结果。",
+      "愿你永远拥有选择的权利，而不是被选择。",
+      "愿你身边总有一两盏灯，为你亮着。",
+      "愿你被许多人喜欢，也被一个人深深爱着。",
+      "愿你心怀浪漫宇宙，也脚踏温柔人间。",
+      "愿你对生活的热爱永远不会被磨掉棱角。",
+      "愿你在人潮汹涌里，被命运轻轻抱住。",
+      "愿你在最需要的时候，总有人出现在你身边。",
+      "愿你不惧岁月漫长，不畏将来可期。",
+      "愿你常被幸事环绕，偶尔有小确幸砸中。",
+      "愿你有底气说‘来日方长’，也不辜负当下每一分一秒。",
+      "愿你有被偏爱的运气，也有被世界温柔以待的福气。",
+      "愿你披荆斩棘时不孤单，停下来休息时有肩膀依靠。",
+      "愿你所有的伏笔都有回响，所有的故事都有圆满结局。",
+      "愿你不被过去困住，不被未来吓倒，好好活在当下。",
+      "愿你敢于表达爱，也敢于拒绝不喜欢的事情。",
+      "愿你在最难的时候，也能想起有人在远处替你加油。",
+      "愿你把遗憾藏进昨天，把笑容留给今天和明天。",
+      "愿你从此以后，开心有人听，不开心有人懂。",
+      "愿你身边人都真诚，遇见的人都温暖。",
+      "愿你走过的每一段路，都算数，都值得回头看。",
+      "愿你一生被人惦记，不被忽略，不被轻视。",
+      "愿你所有的“还好有你”，也有人对你说很多遍。",
+      "愿你常对自己说辛苦了，也常对自己说我真棒。",
+      "愿你在碎碎念念的日子里，收集很多确定的快乐。",
+      "愿你不再害怕分别，因为你会遇见更好的自己。",
+      "愿你永远有听歌吹风的心情，也永远有再出发的勇气。",
+      "愿你能被认真对待，也值得被长久喜欢。",
+      "愿你笑起来的时候，比生日蜡烛还要闪亮。",
+      "愿你每一个愿望都不落空，每一次心动都有回应。",
+      "愿你回头看的时候，都会感谢现在努力的自己。",
+      "愿你在疲惫时有人给你拥抱，在高光时有人为你鼓掌。",
+      "愿你余生的每个生日，都有人陪你吹蜡烛、切蛋糕。",
+      NAME + "，愿这一整屏的祝福，都变成你新一岁的好运。",
+      "愿你今后的路，有风有雨也有彩虹，有苦有甜也有成长。",
+      "愿你在被世界拥抱的同时，也学会好好拥抱自己。",
+      "愿你慢慢长成自己最喜欢的模样，而不是被迫的样子。",
+      "愿你无论在哪个阶段，都不放弃对美好生活的追寻。",
+      "愿你永远对新的一年抱有期待，对生活保持一点小骄傲。",
+      "愿你看到这行字的时候，心里刚好亮起一盏小灯。",
+      "愿你所有难熬的夜晚，最后都能换来温柔的清晨。",
+      "愿你记得：你值得被爱，被认真对待，被温柔以待。",
+      "愿你不再和解于委屈，而是勇敢地选择让自己舒服的生活。",
+      "愿你的世界永远不会缺少好消息和好心情。",
+      "愿有人陪你认真长大，也有人陪你一起做回小孩。",
+      "愿接下来的日子里，你可以更轻松、更自在、更开心。",
+      "愿你的故事被温柔收藏，你的名字被轻声叫唤。",
+      "愿此刻屏幕前的你，被所有温暖的心意悄悄围绕。",
+      NAME + "，愿你以后的每一年，都比这一年更好。",
+      "愿你带着所有人的祝福，大步走向属于你的星辰大海。",
+      "愿你这一生不慌不忙，有趣有盼，越活越浪漫。",
+      "愿你永远记得，今天有人在心里轻轻对你说：生日快乐呀。"
     ];
 
-    function changeBless() {
-      const p = document.getElementById("msg");
-      const idx = Math.floor(Math.random() * messages.length);
-      p.textContent = messages[idx];
+    const danmuLayer = document.getElementById("danmu-layer");
+    const cakeCard = document.getElementById("cake-card");
+    const cakeName = document.getElementById("cake-name");
+
+    cakeName.textContent = NAME;
+
+    let idx = 0;
+
+    // 弹幕发射间隔 —— 数值越小越爆满
+    const launchInterval = 600;   // 0.6 秒一条
+    // 单条弹幕在屏幕上飞行的时间，要和 CSS 动画时间对应
+    const danmuDuration = 15000;  // 15 秒
+
+    function launchDanmu(text) {
+      const el = document.createElement("div");
+      el.className = "danmu";
+      el.textContent = text;
+
+      // 随机高度，避免挤在一条线上
+      const topPercent = 10 + Math.random() * 70; // 10% ~ 80%
+      el.style.top = topPercent + "%";
+
+      danmuLayer.appendChild(el);
+
+      // 动画结束后删除
+      setTimeout(() => {
+        el.remove();
+      }, danmuDuration + 1000);
     }
 
-    // 打开页面时先随机一条
-    changeBless();
+    function startShow() {
+      const timer = setInterval(() => {
+        if (idx >= messages.length) {
+          clearInterval(timer);
+
+          // 等最后几条弹幕飞一会儿，再切到蛋糕
+          setTimeout(() => {
+            danmuLayer.classList.add("fade-out");
+            setTimeout(() => {
+              danmuLayer.style.display = "none";
+              cakeCard.classList.add("show");
+            }, 1200);
+          }, 6000);
+
+          return;
+        }
+
+        launchDanmu(messages[idx]);
+        idx++;
+      }, launchInterval);
+    }
+
+    // 开始播放祝福弹幕
+    startShow();
   </script>
 </body>
 </html>
