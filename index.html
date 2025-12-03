@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>送给你的祝福</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft Yahei", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #ffe6f2, #ffd6a5, #a0c4ff);
+      padding: 16px;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255,255,255,0.94);
+      border-radius: 20px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.15);
+      padding: 24px 20px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .tag {
+      font-size: 13px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: #ff7b9c;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      color: #333;
+    }
+    .message {
+      font-size: 16px;
+      line-height: 1.7;
+      color: #555;
+      margin-bottom: 20px;
+      padding: 0 4px;
+      white-space: pre-line;
+    }
+    .from {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 16px;
+    }
+    button {
+      border: none;
+      outline: none;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      background: linear-gradient(120deg, #ff9a9e, #fad0c4);
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(255,154,158,0.5);
+      transition: transform .1s ease, box-shadow .1s ease, filter .15s ease;
+    }
+    button:active {
+      transform: translateY(1px) scale(.98);
+      box-shadow: 0 4px 12px rgba(255,154,158,0.5);
+      filter: brightness(.97);
+    }
+    .hint {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="tag">FOR YOU</div>
+    <h1>送给你的专属祝福 ✨</h1>
+
+    <p class="message" id="msg"></p>
+
+    <p class="from">—— 来自默默为你加油的人 💌</p>
+
+    <button onclick="changeBless()">换一句祝福</button>
+    <div class="hint">点一下按钮，解锁一条新的小小祝福 🎁</div>
+  </div>
+
+  <script>
+    const messages = [
+      "愿看到这个页面的你，一切烦恼都被清风带走，以后每一天都闪闪发光。",
+      "愿你所念皆如愿，所行化坦途，所盼都能实现。",
+      "希望你永远被温柔以待，也永远有拥抱生活的勇气。",
+      "愿你有人懂，有人宠，有事做，有梦追。",
+      "不管今天怎么样，明天一定会比今天更好一点点。",
+      "愿你眼里总有光芒，手里总有热茶，心中总有期待。",
+      "愿你被世界温柔以待，也别忘了好好爱自己。"
+    ];
+
+    function changeBless() {
+      const p = document.getElementById("msg");
+      const idx = Math.floor(Math.random() * messages.length);
+      p.textContent = messages[idx];
+    }
+
+    // 打开页面时先随机一条
+    changeBless();
+  </script>
+</body>
+</html>
