@@ -1,414 +1,350 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>生日快乐 🎂</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>智能居住</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft Yahei", sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at top, #ffe6f2, #ffd6a5, #a0c4ff);
-      overflow: hidden;
+    :root{
+      --bg:#0b1220; --panel:#0f172a; --panel-2:#0b1329;
+      --text:#e5e7eb; --muted:#94a3b8; --accent:#22d3ee; --danger:#ef4444; --ok:#34d399; --warn:#f59e0b;
+      --ring:rgba(34,211,238,.45);
     }
-
-    #stage {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      max-width: 600px;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--text); background: radial-gradient(1200px 800px at 20% -10%, #1c2a4a 0%, transparent 60%) , var(--bg);
     }
+    .wrap{max-width:1200px; margin:0 auto; padding:24px}
+    header{display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px;}
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:40px;height:40px;border-radius:12px;background:conic-gradient(from 220deg,#22d3ee,#0ea5e9,#22d3ee);box-shadow:0 10px 30px rgba(34,211,238,.25) inset, 0 0 0 1px rgba(255,255,255,.05) inset;}
+    h1{font-size:18px; margin:0; font-weight:700; letter-spacing:.2px}
+    .muted{color:var(--muted); font-size:12px}
 
-    /* 弹幕层 */
-    #danmu-layer {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      transition: opacity 1s ease;
+    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:18px}
+    @media (max-width: 980px){ .grid{grid-template-columns: 1fr; } }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:16px; padding:16px;
+      box-shadow:0 6px 30px rgba(0,0,0,.2), 0 1px 0 rgba(255,255,255,.04) inset;
     }
+    .card-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+    .card-title h2{font-size:14px; margin:0; font-weight:700; letter-spacing:.3px}
 
-    .danmu {
-      position: absolute;
-      right: -50vw;
-      padding: 6px 14px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.55);
-      color: #fff;
-      font-size: 16px;
-      white-space: nowrap;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
-      animation: danmuMove 15s linear forwards;
+    /* 关键：让容器足够大、可滚动；适应/原始切换时使用 */
+    .videoWrap{
+      height: clamp(420px, 62vh, 78vh);       /* 自适应变大 */
+      background: repeating-conic-gradient(#0c152c 0 12deg, #0b1329 12deg 24deg);
+      border-radius:12px; overflow:auto;      /* 原始尺寸时可滚动查看 */
+      display:flex; align-items:center; justify-content:center;
+      position:relative; border:1px solid rgba(255,255,255,.06);
     }
-
-    @keyframes danmuMove {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-180vw); }
+    /* 关键：让图片在“适应模式”时填满容器并等比缩放 */
+    .videoWrap img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
     }
-
-    #danmu-layer.fade-out {
-      opacity: 0;
+    .badge{
+      position:absolute; top:10px; left:10px; font-size:12px; padding:6px 10px; border-radius:999px;
+      background:rgba(15,23,42,.65); border:1px solid rgba(255,255,255,.08); backdrop-filter: blur(5px);
     }
-
-    /* 生日蛋糕卡片 */
-    #cake-card {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transform: scale(0.9);
-      transition: opacity 0.8s ease, transform 0.8s ease;
+    .badge.ok{color:#10b981; border-color:rgba(16,185,129,.35)}
+    .badge.warn{color:#f59e0b; border-color:rgba(245,158,11,.35)}
+    .badge.err{color:#ef4444; border-color:rgba(239,68,68,.35)}
+    .toolbar{display:flex; gap:10px; flex-wrap:wrap}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    label{font-size:12px; color:var(--muted)}
+    input,select{
+      color:var(--text); background:var(--panel);
+      border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:10px 12px; outline:none; min-width:160px;
     }
-
-    #cake-card.show {
-      opacity: 1;
-      transform: scale(1);
-      pointer-events: auto;
+    input:focus,select:focus{box-shadow:0 0 0 3px var(--ring)}
+    .btn{
+      border:1px solid rgba(255,255,255,.12); padding:10px 14px; border-radius:10px; cursor:pointer;
+      background: linear-gradient(180deg, rgba(34,211,238,.2), rgba(34,211,238,.08));
+      color:var(--text); font-weight:700; letter-spacing:.2px;
     }
-
-    .card-inner {
-      background: rgba(255,255,255,0.96);
-      border-radius: 24px;
-      padding: 24px 20px 20px;
-      width: 90%;
-      max-width: 420px;
-      box-shadow: 0 18px 40px rgba(0,0,0,0.2);
-      text-align: center;
-      position: relative;
-    }
-
-    .tag {
-      font-size: 12px;
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
-      color: #ff7b9c;
-      margin-bottom: 8px;
-    }
-
-    h1 {
-      font-size: 24px;
-      color: #333;
-      margin-top: 12px;
-      margin-bottom: 10px;
-    }
-
-    .sub {
-      font-size: 15px;
-      color: #666;
-      line-height: 1.8;
-      margin-top: 6px;
-    }
-
-    /* 小蛋糕 */
-    .cake-wrap {
-      margin-top: 10px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .cake {
-      position: relative;
-      width: 120px;
-      height: 110px;
-    }
-
-    .cake .plate {
-      position: absolute;
-      bottom: 0;
-      width: 130px;
-      height: 18px;
-      background: #f3f3f3;
-      border-radius: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    }
-
-    .cake .layer {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #ffe0e9;
-      border-radius: 12px 12px 8px 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-    }
-
-    .cake .layer.bottom {
-      width: 120px;
-      height: 42px;
-      bottom: 18px;
-    }
-
-    .cake .layer.middle {
-      width: 95px;
-      height: 34px;
-      bottom: 50px;
-      background: #ffd3b1;
-    }
-
-    .cake .layer.top {
-      width: 70px;
-      height: 26px;
-      bottom: 80px;
-      background: #fff0c7;
-    }
-
-    .cake .drip {
-      position: absolute;
-      width: 12px;
-      height: 18px;
-      background: #ffb6c1;
-      border-radius: 10px;
-      top: 68px;
-    }
-
-    .cake .drip.d1 { left: 36px; }
-    .cake .drip.d2 { left: 58px; height: 22px; }
-    .cake .drip.d3 { left: 80px; }
-
-    .candle {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 104px;
-      width: 10px;
-      height: 26px;
-      background: #fff;
-      border-radius: 4px;
-      box-shadow: 0 0 0 2px rgba(255,192,203,0.7) inset;
-    }
-
-    .flame {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 24px;
-      width: 14px;
-      height: 22px;
-      background: radial-gradient(circle at 30% 30%, #fff9c4, #ff9800);
-      border-radius: 50%;
-      box-shadow: 0 0 12px rgba(255,152,0,0.9);
-      animation: flicker 0.8s infinite alternate;
-    }
-
-    @keyframes flicker {
-      from { transform: translateX(-50%) scale(1); opacity: 0.9; }
-      to   { transform: translateX(-50%) scale(1.08); opacity: 1; }
-    }
-
-    .footer-note {
-      font-size: 12px;
-      color: #aaa;
-      margin-top: 10px;
-    }
+    .btn.secondary{background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));}
+    .btn.danger{background: linear-gradient(180deg, rgba(239,68,68,.18), rgba(239,68,68,.04));}
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    .kv{display:grid; grid-template-columns:120px 1fr; gap:10px 12px; margin-top:6px}
+    .kv div{font-size:13px}
+    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08)}
+    .footer{margin-top:16px; display:flex; justify-content:space-between; align-items:center}
+    .small{font-size:12px}
   </style>
 </head>
 <body>
-  <div id="stage">
-    <!-- 弹幕层 -->
-    <div id="danmu-layer"></div>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>智能居住</h1>
+          <div class="muted">浏览器订阅二进制 JPEG</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="pill"><span id="statusDot">●</span><span id="statusText">未连接</span></span>
+        <span class="pill">FPS: <span id="fps">0</span></span>
+        <span class="pill">总帧: <span id="frames">0</span></span>
+      </div>
+    </header>
 
-    <!-- 生日蛋糕卡片 -->
-    <div id="cake-card">
-      <div class="card-inner">
-        <div class="tag">HAPPY BIRTHDAY</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">
+          <h2>实时画面</h2>
+          <div class="row">
+            <button id="btnPause" class="btn secondary">暂停</button>
+            <button id="btnClear" class="btn secondary">清屏</button>
+            <button id="btnFit" class="btn secondary">适应/原始</button>
+          </div>
+        </div>
+        <div class="videoWrap" id="videoWrap">
+          <img id="frame" alt="Waiting for frames…" />
+          <div id="badge" class="badge warn">等待帧...</div>
+        </div>
+      </div>
 
-        <div class="cake-wrap">
-          <div class="cake">
-            <div class="plate"></div>
-            <div class="layer bottom"></div>
-            <div class="layer middle"></div>
-            <div class="layer top"></div>
-            <div class="drip d1"></div>
-            <div class="drip d2"></div>
-            <div class="drip d3"></div>
-            <div class="candle">
-              <div class="flame"></div>
-            </div>
+      <div class="card">
+        <div class="card-title"><h2>连接 / 订阅</h2></div>
+        <div class="kv">
+          <div><label for="broker">Broker (WebSocket)</label></div>
+          <div><input id="broker" class="mono" value="wss://broker.emqx.io:8084/mqtt" /></div>
+
+          <div><label for="topic">Topic</label></div>
+          <div><input id="topic" class="mono" value="image/jpg" /></div>
+
+          <div><label for="clientId">Client ID</label></div>
+          <div><input id="clientId" class="mono" /></div>
+
+          <div><label for="qos">QoS</label></div>
+          <div>
+            <select id="qos">
+              <option value="0" selected>0（推荐：视频更流畅）</option>
+              <option value="1">1（有确认，容易卡顿）</option>
+            </select>
+          </div>
+
+          <div><label for="throttle">显示节流 (ms)</label></div>
+          <div><input id="throttle" type="number" min="0" step="10" value="40" /></div>
+
+          <div><label>控制</label></div>
+          <div class="toolbar">
+            <button id="btnConnect" class="btn">连接</button>
+            <button id="btnDisconnect" class="btn danger" disabled>断开</button>
+            <button id="btnSubscribe" class="btn secondary" disabled>订阅</button>
+            <button id="btnUnsub" class="btn secondary" disabled>取消订阅</button>
+            <button id="btnCopy" class="btn secondary">复制设置</button>
           </div>
         </div>
 
-        <h1><span id="cake-name"></span>，生日快乐！🎂</h1>
-        <p class="sub">
-          愿你被世界温柔以待，<br>
-          也愿这一年所有的期待都不落空。
-        </p>
-        <p class="footer-note">—— 有人悄悄为你准备了这一页小小的惊喜 💌</p>
+        <div class="footer">
+          <div class="small muted"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // ★ 在这里改对方的名字 / 昵称
-    const NAME = "蛋蛋";
+    const el = id => document.getElementById(id);
+    const frame = el('frame');
+    const badge = el('badge');
+    const statusDot = el('statusDot');
+    const statusText = el('statusText');
+    const fpsEl = el('fps');
+    const framesEl = el('frames');
 
-    // ★ 很多很多生日祝福（已经接近 100 条了）
-    const messages = [
-      NAME + "，今天是你的生日呀 🎉",
-      "今天所有的光都在为你亮，所有的祝福都朝你奔来。",
-      "愿你一岁有一岁的欢喜，岁岁常欢愉，年年皆胜意。",
-      "愿你在新的岁月里，眼里有星辰，身边有挚爱，心里有远方。",
-      "愿你所有温柔与爱意，都被世界轻轻接住。",
-      "愿你所遇皆良人，所行皆坦途，所想皆如愿。",
-      "愿你的笑容，像夏日的风一样，吹散所有阴霾。",
-      "愿你读书时全神贯注，玩的时候放肆开心。",
-      "愿你心里常住小太阳，不靠别人也能发光。",
-      "愿你被生活温柔以待，也有底气对世界说：我值得。",
-      "愿你想要的都拥有，得不到的都释怀。",
-      "愿你走过的路，最终都变成脚下的底气。",
-      "愿你山高路远总有人陪，风雨人生有人相依。",
-      "愿你被喜欢环绕，被好运牵手，被幸福拥抱。",
-      "愿你坚持的事情都不被辜负，热爱的生活都如你所愿。",
-      "愿你被很多人宠着，也被自己好好爱着。",
-      "愿你在每个平凡的日子里，都能收获不平凡的小惊喜。",
-      "愿你心里装着星河，眼中藏着温柔与坚定。",
-      "愿你所期待的，都在慢慢靠近你。",
-      "愿你永远不缺从头再来的勇气。",
-      "愿你走过半生，归来仍是那个被爱的小孩。",
-      "愿你不被时间磨平棱角，却被岁月温柔以待。",
-      "愿你白天有说有笑，晚上睡个好觉。",
-      "愿你忙碌不失热爱，疲惫不丢期待。",
-      "愿你所有的崩溃，都能换来更好的重启。",
-      "愿你内心有光，脚下有路，身边有人同行。",
-      "愿你哭的时候有人安慰，笑的时候有人陪伴。",
-      "愿你所有的心酸都有人懂，所有的付出都有回报。",
-      "愿你在被现实推搡的时候，也别丢掉温柔和浪漫。",
-      "愿你越长大越温柔，也越坚定。",
-      "愿你不被标签束缚，只按自己喜欢的样子生活。",
-      "愿你心之所向皆能抵达，愿你所爱之人恰好也爱你。",
-      "愿你在以后的每个生日，都能真心地对自己说：这一年我有好好生活。",
-      "愿你的世界永远明亮，身边永远有人把你放心上。",
-      "愿你眉眼带笑，心底有光，不惧远方。",
-      "愿你走过荆棘，依旧相信花会再开。",
-      "愿你眼中有风景，心中有山海，脚下有自己选的方向。",
-      "愿你被温柔以待的同时，也能成为别人的温柔。",
-      "愿你历经千帆，仍然觉得人生值得。",
-      "愿你心里有火，眼里有光，身后有人。",
-      "愿你每一次的认真，都有人看见；每一次的难过，都有人安慰。",
-      "愿你不再被情绪裹挟，学会温柔地对待自己。",
-      "愿你所爱之人，恰好也会为你准备惊喜。",
-      "愿你在未来的路上，每一步都算数。",
-      "愿你对喜欢的事情永远充满热情。",
-      "愿你偶尔迷茫，但永远不放弃向前走。",
-      "愿你在黑夜里有灯，在雨天里有伞，在失落时有拥抱。",
-      "愿你被珍惜，被偏爱，被坚定地选择。",
-      "愿你所有的努力，都在某个不经意的瞬间开花结果。",
-      "愿你永远拥有选择的权利，而不是被选择。",
-      "愿你身边总有一两盏灯，为你亮着。",
-      "愿你被许多人喜欢，也被一个人深深爱着。",
-      "愿你心怀浪漫宇宙，也脚踏温柔人间。",
-      "愿你对生活的热爱永远不会被磨掉棱角。",
-      "愿你在人潮汹涌里，被命运轻轻抱住。",
-      "愿你在最需要的时候，总有人出现在你身边。",
-      "愿你不惧岁月漫长，不畏将来可期。",
-      "愿你常被幸事环绕，偶尔有小确幸砸中。",
-      "愿你有底气说‘来日方长’，也不辜负当下每一分一秒。",
-      "愿你有被偏爱的运气，也有被世界温柔以待的福气。",
-      "愿你披荆斩棘时不孤单，停下来休息时有肩膀依靠。",
-      "愿你所有的伏笔都有回响，所有的故事都有圆满结局。",
-      "愿你不被过去困住，不被未来吓倒，好好活在当下。",
-      "愿你敢于表达爱，也敢于拒绝不喜欢的事情。",
-      "愿你在最难的时候，也能想起有人在远处替你加油。",
-      "愿你把遗憾藏进昨天，把笑容留给今天和明天。",
-      "愿你从此以后，开心有人听，不开心有人懂。",
-      "愿你身边人都真诚，遇见的人都温暖。",
-      "愿你走过的每一段路，都算数，都值得回头看。",
-      "愿你一生被人惦记，不被忽略，不被轻视。",
-      "愿你所有的“还好有你”，也有人对你说很多遍。",
-      "愿你常对自己说辛苦了，也常对自己说我真棒。",
-      "愿你在碎碎念念的日子里，收集很多确定的快乐。",
-      "愿你不再害怕分别，因为你会遇见更好的自己。",
-      "愿你永远有听歌吹风的心情，也永远有再出发的勇气。",
-      "愿你能被认真对待，也值得被长久喜欢。",
-      "愿你笑起来的时候，比生日蜡烛还要闪亮。",
-      "愿你每一个愿望都不落空，每一次心动都有回应。",
-      "愿你回头看的时候，都会感谢现在努力的自己。",
-      "愿你在疲惫时有人给你拥抱，在高光时有人为你鼓掌。",
-      "愿你余生的每个生日，都有人陪你吹蜡烛、切蛋糕。",
-      NAME + "，愿这一整屏的祝福，都变成你新一岁的好运。",
-      "愿你今后的路，有风有雨也有彩虹，有苦有甜也有成长。",
-      "愿你在被世界拥抱的同时，也学会好好拥抱自己。",
-      "愿你慢慢长成自己最喜欢的模样，而不是被迫的样子。",
-      "愿你无论在哪个阶段，都不放弃对美好生活的追寻。",
-      "愿你永远对新的一年抱有期待，对生活保持一点小骄傲。",
-      "愿你看到这行字的时候，心里刚好亮起一盏小灯。",
-      "愿你所有难熬的夜晚，最后都能换来温柔的清晨。",
-      "愿你记得：你值得被爱，被认真对待，被温柔以待。",
-      "愿你不再和解于委屈，而是勇敢地选择让自己舒服的生活。",
-      "愿你的世界永远不会缺少好消息和好心情。",
-      "愿有人陪你认真长大，也有人陪你一起做回小孩。",
-      "愿接下来的日子里，你可以更轻松、更自在、更开心。",
-      "愿你的故事被温柔收藏，你的名字被轻声叫唤。",
-      "愿此刻屏幕前的你，被所有温暖的心意悄悄围绕。",
-      NAME + "，愿你以后的每一年，都比这一年更好。",
-      "愿你带着所有人的祝福，大步走向属于你的星辰大海。",
-      "愿你这一生不慌不忙，有趣有盼，越活越浪漫。",
-      "愿你永远记得，今天有人在心里轻轻对你说：生日快乐呀。"
-    ];
+    const broker = el('broker');
+    const topic = el('topic');
+    const clientId = el('clientId');
+    const qos = el('qos');
+    const throttle = el('throttle');
 
-    const danmuLayer = document.getElementById("danmu-layer");
-    const cakeCard = document.getElementById("cake-card");
-    const cakeName = document.getElementById("cake-name");
+    const btnConnect = el('btnConnect');
+    const btnDisconnect = el('btnDisconnect');
+    const btnSubscribe = el('btnSubscribe');
+    const btnUnsub = el('btnUnsub');
+    const btnCopy = el('btnCopy');
 
-    cakeName.textContent = NAME;
+    const btnPause = el('btnPause');
+    const btnClear = el('btnClear');
+    const btnFit = el('btnFit');
+    const videoWrap = el('videoWrap');
 
-    let idx = 0;
+    let client = null;
+    let connected = false;
+    let subscribed = false;
+    let totalFrames = 0;
+    let lastTs = 0;
+    let lastUpdate = 0;
+    let paused = false;
+    let objectUrl = null;
+    let fitMode = true; // 适应/原始
 
-    // 弹幕发射间隔 —— 数值越小越爆满
-    const launchInterval = 600;   // 0.6 秒一条
-    // 单条弹幕在屏幕上飞行的时间，要和 CSS 动画时间对应
-    const danmuDuration = 15000;  // 15 秒
+    clientId.value = 'webcam_' + Math.random().toString(16).slice(2, 10);
 
-    function launchDanmu(text) {
-      const el = document.createElement("div");
-      el.className = "danmu";
-      el.textContent = text;
+    setInterval(() => {
+      const now = performance.now();
+      const dt = now - lastTs;
+      const fps = dt > 0 ? Math.round(1000 / dt) : 0;
+      fpsEl.textContent = isFinite(fps) ? fps : 0;
+    }, 500);
 
-      // 随机高度，避免挤在一条线上
-      const topPercent = 10 + Math.random() * 70; // 10% ~ 80%
-      el.style.top = topPercent + "%";
-
-      danmuLayer.appendChild(el);
-
-      // 动画结束后删除
-      setTimeout(() => {
-        el.remove();
-      }, danmuDuration + 1000);
+    function setStatus(txt, kind='warn'){
+      statusText.textContent = txt;
+      statusDot.style.color = kind==='ok' ? '#34d399' : kind==='err' ? '#ef4444' : '#f59e0b';
+    }
+    function setBadge(txt, kind='warn'){
+      badge.textContent = txt;
+      badge.className = 'badge ' + (kind==='ok'?'ok':kind==='err'?'err':'warn');
+      badge.style.display = 'inline-flex';
+    }
+    function cleanupImage(){
+      if (objectUrl){ URL.revokeObjectURL(objectUrl); objectUrl = null; }
     }
 
-    function startShow() {
-      const timer = setInterval(() => {
-        if (idx >= messages.length) {
-          clearInterval(timer);
-
-          // 等最后几条弹幕飞一会儿，再切到蛋糕
-          setTimeout(() => {
-            danmuLayer.classList.add("fade-out");
-            setTimeout(() => {
-              danmuLayer.style.display = "none";
-              cakeCard.classList.add("show");
-            }, 1200);
-          }, 6000);
-
-          return;
-        }
-
-        launchDanmu(messages[idx]);
-        idx++;
-      }, launchInterval);
+    // 适应/原始 两种展示方式
+    function applyFit(){
+      if (fitMode){
+        // 适应：填满容器，等比缩放
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        frame.style.objectFit = 'contain';
+        frame.style.imageRendering = 'auto';
+        videoWrap.style.alignItems = 'center';
+        videoWrap.style.justifyContent = 'center';
+      }else{
+        // 原始：按原像素显示（1:1），可滚动查看
+        frame.style.width = 'auto';
+        frame.style.height = 'auto';
+        frame.style.objectFit = 'none';
+        frame.style.imageRendering = 'pixelated';
+        videoWrap.scrollTop = videoWrap.scrollLeft = 0;
+      }
     }
 
-    // 开始播放祝福弹幕
-    startShow();
+    function onFrame(payload){
+      if (paused) return;
+
+      const now = performance.now();
+      const gap = Number(throttle.value) || 0;
+      if (gap > 0 && now - lastUpdate < gap) return;
+      lastUpdate = now;
+
+      cleanupImage();
+
+      const blob = new Blob([payload], { type: 'image/jpeg' });
+      objectUrl = URL.createObjectURL(blob);
+      frame.src = objectUrl;
+
+      totalFrames++;
+      framesEl.textContent = totalFrames;
+      lastTs = now;
+      setBadge('接收中...', 'ok');
+    }
+
+    function connect(){
+      if (connected){ return; }
+      setBadge('连接中...'); setStatus('连接中...');
+      btnConnect.disabled = true; btnDisconnect.disabled = false;
+
+      const url = broker.value.trim();
+      const cid = clientId.value.trim() || ('webcam_' + Math.random().toString(16).slice(2,10));
+
+      client = mqtt.connect(url, {
+        clientId: cid, clean: true, reconnectPeriod: 2000, connectTimeout: 15000, protocolVersion: 4, resubscribe: false
+      });
+
+      client.on('connect', () => {
+        connected = true; setStatus('已连接','ok'); setBadge('未订阅','warn');
+        btnSubscribe.disabled = false; btnUnsub.disabled = true;
+      });
+
+      client.on('reconnect', () => setStatus('自动重连中...'));
+      client.on('close', () => {
+        connected = false; subscribed = false;
+        setStatus('已断开'); setBadge('已断开','err');
+        btnConnect.disabled = false; btnDisconnect.disabled = true;
+        btnSubscribe.disabled = true; btnUnsub.disabled = true;
+      });
+      client.on('error', (err) => { setStatus('错误：' + (err?.message || err), 'err'); setBadge('连接错误','err'); });
+      client.on('message', (_t, payload) => onFrame(payload));
+    }
+
+    function disconnect(){
+      if (!client) return;
+      try{ client.end(true); }catch(_){}
+      connected = false; subscribed = false; client = null;
+      setStatus('已断开'); setBadge('未连接','warn');
+      btnConnect.disabled = false; btnDisconnect.disabled = true;
+      btnSubscribe.disabled = true; btnUnsub.disabled = true;
+    }
+
+    function subscribe(){
+      if (!client || !connected) return;
+      const t = topic.value.trim();
+      const q = Number(qos.value)||0;
+      client.subscribe(t, { qos: q }, (err) => {
+        if (err){ setBadge('订阅失败','err'); return; }
+        subscribed = true; setBadge(`已订阅：${t}`,'ok');
+        btnSubscribe.disabled = true; btnUnsub.disabled = false;
+        totalFrames = 0; framesEl.textContent = '0';
+      });
+    }
+
+    function unsubscribe(){
+      if (!client || !connected || !subscribed) return;
+      const t = topic.value.trim();
+      client.unsubscribe(t, (err)=>{
+        if (err){ setBadge('取消订阅失败','err'); return; }
+        subscribed = false; setBadge('未订阅','warn');
+        btnSubscribe.disabled = false; btnUnsub.disabled = true;
+      });
+    }
+
+    // 事件
+    el('btnConnect').addEventListener('click', connect);
+    el('btnDisconnect').addEventListener('click', disconnect);
+    el('btnSubscribe').addEventListener('click', subscribe);
+    el('btnUnsub').addEventListener('click', unsubscribe);
+
+    el('btnCopy').addEventListener('click', () => {
+      const cfg = { broker: broker.value.trim(), topic: topic.value.trim(), qos: Number(qos.value)||0 };
+      navigator.clipboard.writeText(JSON.stringify(cfg,null,2));
+      setBadge('已复制设置', 'ok');
+      setTimeout(()=>setBadge(subscribed?`已订阅：${topic.value}`:'未订阅', subscribed?'ok':'warn'), 800);
+    });
+
+    el('btnPause').addEventListener('click', () => {
+      paused = !paused;
+      el('btnPause').textContent = paused ? '继续' : '暂停';
+      setBadge(paused ? '已暂停' : (subscribed?'接收中...':'未订阅'), paused ? 'warn' : 'ok');
+    });
+
+    el('btnClear').addEventListener('click', () => {
+      cleanupImage(); frame.removeAttribute('src');
+      setBadge(subscribed?'等待下一帧...':'未订阅', 'warn');
+    });
+
+    el('btnFit').addEventListener('click', () => {
+      fitMode = !fitMode; applyFit();
+      setBadge(fitMode?'自适应显示':'原始像素', 'ok');
+      setTimeout(()=>setBadge(subscribed?'接收中...':'未订阅', subscribed?'ok':'warn'), 800);
+    });
+
+    // 初始状态：自适应显示
+    applyFit();
+    setBadge('未连接','warn'); setStatus('未连接','warn');
   </script>
 </body>
 </html>
